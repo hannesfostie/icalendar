@@ -12,7 +12,7 @@ require 'uri'
 require 'stringio'
 
 module Icalendar
-  
+
   def Icalendar.parse(src, single = false)
     cals = Icalendar::Parser.new(src).parse
 
@@ -62,8 +62,8 @@ module Icalendar
     def next_line
       line = @prev_line
 
-      if line.nil? 
-        return nil 
+      if line.nil?
+        return nil
       end
 
       # Loop through until we get to a non-continuation line...
@@ -94,7 +94,7 @@ module Icalendar
 
       @@logger.debug "parsing..."
       # Outer loop for Calendar objects
-      while (line = next_line) 
+      while (line = next_line)
         fields = parse_line(line)
 
         # Just iterate through until we find the beginning of a calendar object
@@ -112,7 +112,7 @@ module Icalendar
 
     # Parse a single VCALENDAR object
     # -- This should consist of the PRODID, VERSION, option METHOD & CALSCALE,
-    # and then one or more calendar components: VEVENT, VTODO, VJOURNAL, 
+    # and then one or more calendar components: VEVENT, VTODO, VJOURNAL,
     # VFREEBUSY, VTIMEZONE
     def parse_component(component = Calendar.new)
       @@logger.debug "parsing new component..."
@@ -126,6 +126,8 @@ module Icalendar
         # be able to handle them in any order...
         if name == "END"
           break
+        elsif name == "UID" || name == "ACKNOWLEDGED"
+          next
         elsif name == "BEGIN" # New component
           case(fields[:value])
           when "VEVENT" # Event
@@ -183,7 +185,7 @@ module Icalendar
               raise(UnknownPropertyMethod, "Unknown property type: #{name}")
             end
           end
-        end  
+        end
       end
 
       component
@@ -197,7 +199,7 @@ module Icalendar
 
     # Contentline
     LINE = "(#{NAME})(.*(?:#{QSTR})|(?:[^:]*))\:(.*)"
-   
+
     # *<Any character except CTLs, DQUOTE, ";", ":", ",">
     PTEXT   = '[^";:,]*'
 
@@ -259,7 +261,7 @@ module Icalendar
       {:name => name, :value => value, :params => params}
     end
 
-    ## Following is a collection of parsing functions for various 
+    ## Following is a collection of parsing functions for various
     ## icalendar property value data types...  First we setup
     ## a hash with property names pointing to methods...
     def setup_parsers
@@ -295,12 +297,12 @@ module Icalendar
       # This is a URI by default, and if its not a valid URI
       # it will be returned as a string which works for binary data
       # the other possible type.
-      @parsers["ATTACH"] = m 
+      @parsers["ATTACH"] = m
 
       # GEO
       m = self.method(:parse_geo)
       @parsers["GEO"] = m
-      
+
       #RECUR
       m = self.method(:parse_recur)
       @parsers["RRULE"] = m
@@ -340,13 +342,13 @@ module Icalendar
         value
       end
     end
-    
+
     def parse_recur(name, params, value)
       ::Icalendar::RRule.new(name, params, value, self)
     end
 
     # Durations
-    # TODO: Need to figure out the best way to represent durations 
+    # TODO: Need to figure out the best way to represent durations
     # so just returning string for now.
     def parse_duration(name, params, value)
       value
@@ -385,7 +387,7 @@ module Icalendar
     # if the parsing fails return the string
     def parse_geo(name, params, value)
       strloc = value.split(';')
-      if strloc.size != 2 
+      if strloc.size != 2
         return value
       end
 
